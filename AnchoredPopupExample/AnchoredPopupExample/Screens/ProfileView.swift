@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import AnchoredPopup
+import ExyteAnchoredPopup
 
 struct ProfileView: View {
     @Environment(\.anchoredPopupDismiss) var dismiss

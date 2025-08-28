@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import AnchoredPopup
+import ExyteAnchoredPopup
 
 struct MainView: View {
 
