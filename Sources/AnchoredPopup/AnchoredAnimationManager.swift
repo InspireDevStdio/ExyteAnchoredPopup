@@ -159,9 +159,12 @@ struct TriggerButton<V>: ViewModifier where V: View {
             }
             .simultaneousGesture(
                 TapGesture().onEnded { gesture in
-                    // trigger displaying animation
-                    hideKeyboard()
-                    AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .growing)
+                    // trigger displaying animation only if popup is hidden
+                    let currentState = AnchoredAnimationManager.shared.animations.first(where: { $0.id == id })?.state
+                    if currentState == .hidden || currentState == nil {
+                        hideKeyboard()
+                        AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .growing)
+                    }
                 }
             )
             .onReceive(AnchoredAnimationManager.shared.statePublisher(for: id)) { animation in
@@ -200,7 +203,7 @@ fileprivate struct AnchoredAnimationView<V>: View where V: View {
     @State private var triggerButtonFrame: IntRect = .zero
     @State private var contentSize: IntSize = .zero
 
-    @State private var semaphore = DispatchSemaphore(value: 1)
+    @State private var isAnimating = false
 
     var body: some View {
         VStack {
@@ -244,33 +247,45 @@ fileprivate struct AnchoredAnimationView<V>: View where V: View {
     private func setupAndLaunchAnimation(_ animation: AnchoredAnimationManager.AnimationItem) {
         if contentSize == .zero || triggerButtonFrame == .zero { return }
 
-        semaphore.wait()
+        // ignore repeated growing requests while growing animation is in progress
+        // but allow shrinking to interrupt growing
+        if isAnimating && animation.state == .growing { return }
+
         if animation.state == .growing {
+            isAnimating = true
             setHiddenState()
 
             if #available(iOS 17.0, *) {
                 withAnimation(params.animation) {
                     setDisplayedState()
                 } completion: {
-                    AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .displayed)
-                    semaphore.signal()
+                    // only update state if in growing state and not interrupted by shrinking
+                    let currentState = AnchoredAnimationManager.shared.animations.first(where: { $0.id == id })?.state
+                    if currentState == .growing {
+                        AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .displayed)
+                    }
+                    isAnimating = false
                 }
             } else {
                 withAnimation(params.animation) {
                     setDisplayedState()
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .displayed)
-                    semaphore.signal()
+                    let currentState = AnchoredAnimationManager.shared.animations.first(where: { $0.id == id })?.state
+                    if currentState == .growing {
+                        AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .displayed)
+                    }
+                    isAnimating = false
                 }
             }
         } else if animation.state == .shrinking {
+            isAnimating = true
             if #available(iOS 17.0, *) {
                 withAnimation(params.animation) {
                     setHiddenState()
                 } completion: {
                     AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .hidden)
-                    semaphore.signal()
+                    isAnimating = false
                 }
             } else {
                 withAnimation(params.animation) {
@@ -278,11 +293,9 @@ fileprivate struct AnchoredAnimationView<V>: View where V: View {
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     AnchoredAnimationManager.shared.changeStateForAnimation(for: id, state: .hidden)
-                    semaphore.signal()
+                    isAnimating = false
                 }
             }
-        } else {
-            semaphore.signal()
         }
     }
 
