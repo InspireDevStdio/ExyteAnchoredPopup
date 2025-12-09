@@ -49,7 +49,10 @@ Customized example:
 - `contentBuilder` - popup body builder
 
 ### Optional parameters
-- `position` - a `UnitPoint` to align with `UnitPoint`-th part of anchor view. Could be an `anchorRelative` or `screenRelative` 'UnitPoint'   
+- `position` - determines where the popup appears on screen. Available options:
+    * `.anchorRelative(UnitPoint)` - aligns the popup relative to the anchor view at the corresponding proportion
+    * `.screenRelative(UnitPoint)` - aligns the popup relative to the whole screen (default: `.center`)
+    * `.absolute(UnitPoint, position: CGPoint)` - places the popup at an exact screen coordinate, with `UnitPoint` specifying which part of the popup aligns to that position
 - `animation` - appear/disappear animation   
 - `closeOnTap` - enable/disable closing on tap on popup    
 - `closeOnTapOutside` - enable/disable closing on tap on popup's background     
