@@ -35,6 +35,7 @@ public class AnchoredPopup {
 public enum AnchoredPopupPosition {
     case anchorRelative(_ point: UnitPoint) // popup view will be aligned to anchor view at corresponding proportion
     case screenRelative(_ point: UnitPoint = .center) // popup view will be aligned to whole screen
+    case absolute(_ point: UnitPoint, position: CGPoint) // popup will be placed at exact screen position, with point specifying which part of popup aligns to that position
 }
 
 public enum AnchoredPopupBackground {

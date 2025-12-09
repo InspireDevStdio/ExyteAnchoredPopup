@@ -344,6 +344,20 @@ fileprivate struct AnchoredAnimationView<V>: View where V: View {
             // sw * p.x: put middle of popup into required unit point of screen
             // cw/2 * px: align required unit point of popup with the screen
             return CGSize(width: -tx + sw * p.x + cw/2 * px, height: -ty + sh * p.y + ch/2 * py)
+
+        case .absolute(let point, let position):
+            let tx = triggerButtonFrame.floatMidX
+            let ty = triggerButtonFrame.floatMidY
+
+            // normalization: (0, 1) -> (1, -1)
+            let px = -2 * point.x + 1
+            let py = -2 * point.y + 1
+
+            // the content view center is currently same as anchor view
+            // -tx: put middle of popup into (0,0)
+            // position.x: put middle of popup into the exact screen position
+            // cw/2 * px: align the specified unit point of popup with that position
+            return CGSize(width: -tx + position.x + cw/2 * px, height: -ty + position.y + ch/2 * py)
         }
     }
 }
