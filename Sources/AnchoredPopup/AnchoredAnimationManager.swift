@@ -206,8 +206,9 @@ fileprivate struct AnchoredAnimationView<V>: View where V: View {
     @State private var isAnimating = false
 
     var body: some View {
-        VStack {
+        GeometryReader { geometry in
             contentBuilder()
+                .frame(width: geometry.size.width, height: geometry.size.height)
                 .overlay(GeometryReader { geo in
                     Color.clear.onAppear {
                         DispatchQueue.main.async {
@@ -232,6 +233,7 @@ fileprivate struct AnchoredAnimationView<V>: View where V: View {
                     }
                 )
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onReceive(AnchoredAnimationManager.shared.framePublisher(for: id)) { animation in
             if let animation, triggerButtonFrame == .zero {
                 triggerButtonFrame = animation.buttonFrame
